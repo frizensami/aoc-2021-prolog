@@ -3,7 +3,8 @@
 
 % Running:
 % swipl day1.pl
-% ?- test.
+% ?- run_part_one.
+% ?- run_part_two.
 
 :- use_module(library(dcg/basics)).
 
@@ -18,11 +19,11 @@ readfile(Out):-
     phrase_from_file(parse(Out), "day1.txt").
 
 % Test case
-test:-
+test_one:-
     number_of_increases([123, 456, 222, 222, 223], 2).
 
 % Actual execution, final val printed.
-run:-
+run_part_one:-
     readfile(Nums),
     number_of_increases(Nums, Result),
     print(Result).
@@ -33,9 +34,40 @@ number_of_increases([], 0) :- !.
 number_of_increases([_], 0) :- !.
 % If there are two elements at least..
 number_of_increases([X,Y|Rest], N):-
+    % Recursively, we check the increases without X, and have that result in N0
     number_of_increases([Y | Rest], N0),
     % If X is less than Y (we're processing the list from the rightmost element first), then add 1
     % otherwise, same result
     ((X < Y -> N is N0 + 1); (X >= Y -> N is N0)).
-    % ((Y > X, N0 is N + 1); (Y =< X, N0 is N)),
 
+
+
+% Actual execution, final val printed.
+% 1720 is wrong
+run_part_two:-
+    readfile(Nums),
+    number_of_increases_three(Nums, Result),
+    print(Result), !.
+
+% Test case
+test_two:-
+    number_of_increases_three([1, 1, 1, 1, 1, 2, 3, 3], 2), !.
+
+% From AOC website directly
+test_two_pt_two:-
+    number_of_increases_three([199, 200, 208, 210, 200, 207, 240, 269, 260, 263], 5), !.
+
+
+number_of_increases_three([N0, N1, N2, N3 | Rest], R):-
+    % Recursively, we check the increases without N0, and have that result in N0
+    number_of_increases_three([N1, N2, N3 | Rest], R0),
+    % Define two intermediate variables to compute the two sums
+    V0 is (N0 + N1 + N2),
+    V1 is (N1 + N2 + N3),
+    % Check whether one sum is more than the other and update the result value accordingly
+    (
+        (V0 < V1) -> R is R0 + 1;
+        (V0 >= V1) -> R is R0
+    ).
+
+number_of_increases_three(_, 0) :- !.
