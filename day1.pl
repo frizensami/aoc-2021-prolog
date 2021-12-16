@@ -1,12 +1,15 @@
-% use_module(library(dcg/high_order)).
 % Check https://github.com/Limmen/Advent-Of-Code16-Prolog/blob/master/day3/3a.pl for input reading
 
 % Running:
+% Test on SWI-Prolog 8.4.1
+% Need to `pack_install(reif).` to access the if_ statement.
 % swipl day1.pl
 % ?- run_part_one.
 % ?- run_part_two.
 
 :- use_module(library(dcg/basics)).
+:- use_module(library(clpfd)).
+:- use_module(library(reif)).
 
 % File input parsing using DCGs (Definite Clause Grammar)
 
@@ -34,11 +37,15 @@ number_of_increases([], 0) :- !.
 number_of_increases([_], 0) :- !.
 % If there are two elements at least..
 number_of_increases([X,Y|Rest], N):-
-    % Recursively, we check the increases without X, and have that result in N0
-    number_of_increases([Y | Rest], N0),
     % If X is less than Y (we're processing the list from the rightmost element first), then add 1
     % otherwise, same result
-    ((X < Y -> N is N0 + 1); (X >= Y -> N is N0)).
+    (X #< Y -> N #= N0 + 1 ; N #= N0),
+
+    % Recursively, we check the increases without X, and have that result in N0
+    number_of_increases([Y | Rest], N0).
+
+    % v1: Base prolog (NOTE: FASTER than clpfd!)
+    %% ((X < Y -> N is N0 + 1); (X >= Y -> N is N0)).
 
 
 
@@ -59,15 +66,25 @@ test_two_pt_two:-
 
 
 number_of_increases_three([N0, N1, N2, N3 | Rest], R):-
-    % Recursively, we check the increases without N0, and have that result in N0
-    number_of_increases_three([N1, N2, N3 | Rest], R0),
+
     % Define two intermediate variables to compute the two sums
-    V0 is (N0 + N1 + N2),
-    V1 is (N1 + N2 + N3),
+    V0 #= (N0 + N1 + N2),
+    V1 #= (N1 + N2 + N3),
     % Check whether one sum is more than the other and update the result value accordingly
     (
-        (V0 < V1) -> R is R0 + 1;
-        (V0 >= V1) -> R is R0
-    ).
+        (V0 #< V1) -> R #= R0 + 1 ; R #= R0
+    ),
+
+    % Recursively, we check the increases without N0, and have that result in N0
+    number_of_increases_three([N1, N2, N3 | Rest], R0).
+    % v1: Base prolog (NOTE: FASTER than clpfd!)
+    %% % Define two intermediate variables to compute the two sums
+    %% V0 is (N0 + N1 + N2),
+    %% V1 is (N1 + N2 + N3),
+    %% % Check whether one sum is more than the other and update the result value accordingly
+    %% (
+    %%     (V0 < V1) -> R is R0 + 1;
+    %%     (V0 >= V1) -> R is R0
+    %% ).
 
 number_of_increases_three(_, 0) :- !.
